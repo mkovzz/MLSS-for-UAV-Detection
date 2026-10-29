@@ -216,3 +216,28 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Visual Studio local state
+.vs/
+*.user
+*.suo
+
+# Build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# Packages and test output
+packages/
+TestResults/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Secrets and local config
+appsettings.Development.json
+*.pubxml.user
