@@ -5,7 +5,7 @@
 /// <summary>
 /// FBD block "Earth". A fully static informational hub: a fixed point mass at the origin that never moves.
 /// Never instantiated; read the constants directly, e.g. Earth::mu.
-/// Consumers: SatelliteBody (mu, j2), OutputWriter (rotation_rate, flattening for ECI <-> ECEF), GroundStation / ConfigIntake (flattening, equatorial_radius for geodetic conversion).
+/// Consumers: UnitConverter (rotation_rate for ECI <-> ECEF; flattening and equatorial_radius for geodetic conversion), SatelliteBody (mu, j2).
 /// </summary>
 class Earth {
 public:

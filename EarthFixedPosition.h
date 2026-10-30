@@ -1,7 +1,7 @@
 #pragma once
 
-#include <array>
 #include <string>
+#include "Vector3d.h"
 
 /// <summary>
 /// D-13 Aircraft and ground-station positions in the Earth-fixed frame (km).
@@ -10,5 +10,5 @@
 struct EarthFixedPosition {
     std::string entityId;
     double time_s = 0.0;
-    std::array<double, 3> position_km{ 0.0, 0.0, 0.0 };
+    Vector3d position_km;
 };

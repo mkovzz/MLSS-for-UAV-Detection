@@ -8,7 +8,7 @@
 /// <summary>
 /// FBD block "Output Writer".
 /// In: D-12 (SatelliteBody), D-13 (GroundStation, AircraftReplay), Storage interval (s) (TimeStepScheduler),
-/// Rotation rate and flattening (Earth). Out: D-02 to the Environment Model and the Run Data Store.
+/// Out: D-02 to the Environment Model and the Run Data Store.
 /// Singleton.
 /// </summary>
 class OutputWriter {
@@ -37,7 +37,7 @@ public:
     /// <param name="storageInterval_s">Storage interval from TimeStepScheduler [s].</param>
     void setStorageInterval(double storageInterval_s);
 
-    /// <summary>Adds one time step of every entity's data to D-02 (D-13 positions are brought into the frame of D-12 using Earth's rotation rate and flattening).</summary>
+    /// <summary>Adds one time step of every entity's data to D-02 (D-13 positions are brought into the frame of D-12 using UnitConverter::ecefToEci).</summary>
     /// <param name="time_s">Simulation time [s].</param>
     /// <param name="satellites">D-12 states.</param>
     /// <param name="groundStations">D-13 positions.</param>

@@ -32,7 +32,7 @@ public:
             Instance = nullptr;
         }
     }
-
+        
     /// <summary>Generates D-10 for every satellite described by D-01 and instantiates a SatelliteBody for each.</summary>
     /// <param name="config">D-01.</param>
     /// <returns>Number of satellites created, -1 on failure.</returns>
