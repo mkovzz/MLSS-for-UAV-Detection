@@ -1,19 +1,17 @@
 #pragma once
 
+#include <map>
 #include <string>
-#include <vector>
-#include "Vector3d.h"
+#include "Ephemeris.h"
 
 /// <summary>
-/// D-02 Ephemeris table: per entity and per stored time, position (x,y,z) plus velocity (vx,vy,vz). UTC is derived at output.
+/// D-02 Ephemeris table: every entity's ephemeris.
+/// EphemerisTable: entity -> Ephemeris
+/// Ephemeris: time -> position and velocity
+/// UTC is derived at output.
 /// Produced by OutputWriter, consumed by the Environment Model and the Run Data Store.
 /// </summary>
 struct EphemerisTable {
-    struct Row {
-        double time_s = 0.0;
-        std::string entityId;
-        Vector3d position;
-        Vector3d velocity;
-    };
-    std::vector<Row> rows;
+    /// entity id -> that entity's ephemeris
+    std::map<std::string, Ephemeris> entities;
 };

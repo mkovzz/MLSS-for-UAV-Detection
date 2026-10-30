@@ -1,12 +1,14 @@
 #pragma once
 
+#include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include "EarthFixedPosition.h"
+#include "Aircraft.h"
 
 /// <summary>
 /// FBD block "Aircraft Replay".
-/// In: Aircraft paths (ConfigIntake), time (s). Out: D-13 to OutputWriter.
+/// In: Aircraft paths (ConfigIntake). Creates one Aircraft per path and owns the shared list.
 /// Singleton.
 /// </summary>
 class AircraftReplay {
@@ -32,17 +34,18 @@ public:
         }
     }
 
-    /// <summary>Loads the recorded flight paths.</summary>
-    /// <param name="flightPathFiles">Flight path data files (CSV) for the aircraft in D-01.</param>
-    /// <returns>Number of aircraft loaded, -1 on failure.</returns>
-    int loadPaths(const std::vector<std::string>& flightPathFiles);
+    /// <summary>Creates an Aircraft for each path, replacing any previous set.</summary>
+    /// <param name="flightPathFilesById">Aircraft id -> flight path data file (CSV), as listed in D-01.</param>
+    /// <returns>Number of aircraft loaded, -1 if any file is missing or unparsable.</returns>
+    int loadPaths(const std::map<std::string, std::string>& flightPathFilesById);
 
-    /// <returns>D-13 positions of all aircraft at the given time.</returns>
-    /// <param name="time_s">Simulation time [s].</param>
-    std::vector<EarthFixedPosition> getPositions(double time_s) const;
+    /// <returns>The shared list of aircraft.</returns>
+    const std::vector<std::shared_ptr<Aircraft>>& getAircraft() const;
 
 private:
     // Private constructor prevents external instantiation
     AircraftReplay() = default;
     ~AircraftReplay() = default;
+
+    std::vector<std::shared_ptr<Aircraft>> aircraft_;
 };

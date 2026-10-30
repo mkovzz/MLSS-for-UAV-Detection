@@ -1,14 +1,20 @@
 #pragma once
 
+#include <memory>
+#include <ostream>
 #include <vector>
-#include "EarthFixedPosition.h"
-#include "EciState.h"
+#include "Aircraft.h"
 #include "EphemerisTable.h"
+#include "GroundStation.h"
+#include "SatelliteBody.h"
 
 /// <summary>
 /// FBD block "Output Writer".
-/// In: D-12 (SatelliteBody), D-13 (GroundStation, AircraftReplay), Storage interval (s) (TimeStepScheduler),
-/// Out: D-02 to the Environment Model and the Run Data Store.
+/// In: the entities (satellites, ground stations, aircraft) each step, and the storage rate (TimeStepScheduler).
+/// Out: D-02 to the Environment Model and the Run Data Store, and a printout.
+/// Decides which steps are stored: with a storage rate of N it stores every Nth call to recordStep() (the first call, then
+/// N, 2N, ...), counted as whole steps so no floating-point time comparison is involved.
+/// Every ephemeris is in ECI; conversion to longitude / latitude / altitude happens only here, on output.
 /// Singleton.
 /// </summary>
 class OutputWriter {
@@ -34,26 +40,42 @@ public:
         }
     }
 
-    /// <param name="storageInterval_s">Storage interval from TimeStepScheduler [s].</param>
-    void setStorageInterval(double storageInterval_s);
+    /// <summary>Sets how often steps are stored and restarts the step count.</summary>
+    /// <param name="stepsPerSample">Storage rate: store every Nth step (1 = every step). Must be at least 1.</param>
+    void setStorageRate(int stepsPerSample);
 
-    /// <summary>Adds one time step of every entity's data to D-02 (D-13 positions are brought into the frame of D-12 using UnitConverter::ecefToEci).</summary>
-    /// <param name="time_s">Simulation time [s].</param>
-    /// <param name="satellites">D-12 states.</param>
-    /// <param name="groundStations">D-13 positions.</param>
-    /// <param name="aircraft">D-13 positions.</param>
-    void recordStep(double time_s,
-        const std::vector<EciState>& satellites,
-        const std::vector<EarthFixedPosition>& groundStations,
-        const std::vector<EarthFixedPosition>& aircraft);
+    /// <summary>
+    /// Called once per time step, after every entity has been updated. If this step is a storage step, tells each entity
+    /// (aircraft only if active) to append its current state to its own ephemeris.
+    /// </summary>
+    /// <param name="satellites">Shared list from ConstellationGenerator.</param>
+    /// <param name="groundStations">Shared list from ConfigIntake.</param>
+    /// <param name="aircraft">Shared list from AircraftReplay.</param>
+    void recordStep(const std::vector<std::shared_ptr<SatelliteBody>>& satellites,
+        const std::vector<std::shared_ptr<GroundStation>>& groundStations,
+        const std::vector<std::shared_ptr<Aircraft>>& aircraft);
 
-    /// <returns>D-02 produced so far.</returns>
-    const EphemerisTable& getTable() const;
+    /// <summary>Assembles D-02 (entity id -> ephemeris, ECI) from the entities' own ephemerides.</summary>
+    /// <returns>A copy of the table.</returns>
+    EphemerisTable buildTable(const std::vector<std::shared_ptr<SatelliteBody>>& satellites,
+        const std::vector<std::shared_ptr<GroundStation>>& groundStations,
+        const std::vector<std::shared_ptr<Aircraft>>& aircraft) const;
+
+    /// <summary>
+    /// Prints D-02, converted for reading: for each entity, one line per stored time with the time (s since start) and the
+    /// position as longitude (deg), latitude (deg) and altitude (km). Velocity is not printed.
+    /// </summary>
+    /// <param name="out">Stream to print to.</param>
+    void print(std::ostream& out,
+        const std::vector<std::shared_ptr<SatelliteBody>>& satellites,
+        const std::vector<std::shared_ptr<GroundStation>>& groundStations,
+        const std::vector<std::shared_ptr<Aircraft>>& aircraft) const;
 
 private:
     // Private constructor prevents external instantiation
     OutputWriter() = default;
     ~OutputWriter() = default;
 
-    EphemerisTable table_;
+    int storageRate_ = 1;
+    long long stepCount_ = 0;
 };

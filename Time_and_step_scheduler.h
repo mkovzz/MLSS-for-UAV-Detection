@@ -3,7 +3,7 @@
 /// <summary>
 /// FBD block "Time and step scheduler".
 /// In: Run controls (Backend Controls; RunController stands in for now).
-/// Out: time (s) to SatelliteBody and AircraftReplay (via ProduceEphemerisTable), Storage interval (s) to OutputWriter.
+/// Out: time (s) to the entities (via ProduceEphemerisTable), storage rate to OutputWriter (via ProduceEphemerisTable).
 /// Singleton.
 /// </summary>
 class TimeStepScheduler {
@@ -29,8 +29,9 @@ public:
         }
     }
 
-    /// <summary>Applies the run controls: start time, end time, step size and storage interval.</summary>
-    void configure(double startTime_s, double endTime_s, double stepSize_s, double storageInterval_s);
+    /// <summary>Applies the run controls: start time, end time, step size and storage rate.</summary>
+    /// <param name="storageRate">Store every Nth step (1 = every step); a multiple of the step size, so storage is counted in whole steps.</param>
+    void configure(double startTime_s, double endTime_s, double stepSize_s, int storageRate);
 
     /// <summary>Moves to the next step.</summary>
     /// <returns>false once the end time is reached or the run is stopped.</returns>
@@ -43,8 +44,8 @@ public:
     /// <returns>Current simulation time [s].</returns>
     double getTime() const;
 
-    /// <returns>Storage interval [s].</returns>
-    double getStorageInterval() const;
+    /// <returns>Storage rate: store every Nth step.</returns>
+    int getStorageRate() const;
 
 private:
     // Private constructor prevents external instantiation

@@ -9,7 +9,8 @@
 /// FBD block "Config Intake".
 /// In: D-01 (Backend Controls; RunController stands in for now).
 /// Out: Position to GroundStation, D-01 to ConstellationGenerator, Aircraft paths to AircraftReplay, Early rejection to HealthMonitor.
-/// Instantiates the ground stations and owns their shared list. Singleton.
+/// Created by InstantiateSubsystem(); Initialize() does not create any other component.
+/// Creates the ground stations (during ingest()) and owns their shared list. Singleton.
 /// </summary>
 class ConfigIntake {
 public:
