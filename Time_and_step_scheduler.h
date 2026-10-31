@@ -51,4 +51,12 @@ private:
     // Private constructor prevents external instantiation
     TimeStepScheduler() = default;
     ~TimeStepScheduler() = default;
+
+    double startTime_s_ = 0.0;
+    double endTime_s_ = 0.0;
+    double stepSize_s_ = 1.0;
+    double currentTime_s_ = 0.0;
+    int storageRate_ = 1;
+    bool paused_ = false;
+    bool stopped_ = false;
 };

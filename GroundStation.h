@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <memory>
+#include <vector>
 #include "Ephemeris.h"
 #include "Vector3d.h"
 
@@ -31,6 +33,10 @@ public:
 
     /// <returns>The stored samples of this station.</returns>
     const Ephemeris& getEphemeris() const;
+
+    static std::shared_ptr<GroundStation> getClosest(
+        const std::vector<std::shared_ptr<GroundStation>>& stations,
+        const Vector3d& point);
 
 private:
     std::string id_;

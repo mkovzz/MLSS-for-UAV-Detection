@@ -1,14 +1,22 @@
 #pragma once
 
-#include <iostream>
 #include <string>
-#include <random>
-#include "SatelliteBody.h"
-#include "Earth.h"
+#include "ScenarioConfig.h"
 
 /// <summary>
-/// Will eventually interface with its main subsystem "Backend controls" but as of now is a unit tester for D-01 and 
-/// run controls. 
+/// Stand-in for the full "Backend Controls" subsystem. As of now it is only a unit tester for the physics engine, driven by commands
+/// typed in the terminal. It gives the engine the two things Backend Controls will eventually send in (D-01 and the run controls)
+/// and fires the start signal. It has no validation, run registry or status handling.
+///
+/// Commands (one per line):
+///   help                                   list commands
+///   load <file>                           read D-01 (JSON text) from a file
+///   settings <start> <end> <step> <rate>   run controls: times in seconds, rate = store every Nth step
+///   status                                 show what has been loaded / set
+///   run                                    fire the start signal (blocks until the run ends)
+///   quit                                   exit
+///
+/// Singleton.
 /// </summary>
 class RunController {
 public:
@@ -33,30 +41,48 @@ public:
         }
     }
 
-    /**
-    * @brief Starts the simulation, from a set time or time 0 (for milestone 1, we will pass only one satellite to the function)
-    * @param sat: satellite with it's current position and velocity, earth: earth struct, t: passes the time
-    * @return void
-    */
-    void startProcessing(SatelliteBody& sat, Earth& earth, double t);
+    /// The "Run controls" Backend Controls sends to the TimeStepScheduler.
+    struct RunControls {
+        double startTime_s = 0.0;
+        double endTime_s = 0.0;
+        double stepSize_s = 0.0;
+        int storageRate = 1;    // store every Nth step
+    };
 
-    /**
-    * @brief Stops the preprocessing
-    * @param None
-    * @return void
-    */
+    /// <summary>Reads commands from the terminal until "quit" or end of input.</summary>
+    void commandLoop();
+
+    /// <summary>
+    /// Fires the start signal: creates the physics engine, gives it the loaded D-01 and run controls, then runs
+    /// ProduceEphemerisTable(). The engine is shut down again afterwards so the next run starts clean.
+    /// </summary>
+    /// <returns>ProduceEphemerisTable()'s result (0 success, -1 not ready / rejected, -2 aborted), or -1 if nothing is loaded or the engine could not be instantiated.</returns>
+    int startProcessing();
+
+    /// <summary>
+    /// Sends the stop run control to the TimeStepScheduler. Not reachable from the terminal yet, because startProcessing()
+    /// blocks until the run is over.
+    /// </summary>
     void stopProcessing();
-
-    /**
-    * @brief Generates a seed or uses the passed seed to assign reasonable and random values to each satellite in a configuration
-    * For milestone 1, we will only pass one satellite.
-    * @param sat: the satellite in the configuration, seed: the seed entered by the user (if blank a random seed will be generated)
-    * @return void
-    */
-    int generateSeed(SatelliteBody& sat, const std::string& seed);
 
 private:
     // Private constructor prevents external instantiation
     RunController() = default;
     ~RunController() = default;
+
+    /// <summary>Handles one line of terminal input.</summary>
+    /// <returns>false if the loop should end.</returns>
+    bool handleCommand(const std::string& line);
+
+    /// <summary>Reads the file at path into config_.</summary>
+    /// <returns>true on success.</returns>
+    bool loadConfig(const std::string& path);
+
+    void printHelp() const;
+    void printStatus() const;
+
+    ScenarioConfig config_;
+    RunControls controls_;
+    bool configLoaded_ = false;
+    bool controlsSet_ = false;
 };

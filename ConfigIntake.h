@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <map>
 #include <vector>
 #include "GroundStation.h"
 #include "ScenarioConfig.h"
@@ -42,6 +43,7 @@ public:
 
     /// <returns>The shared list of ground stations.</returns>
     const std::vector<std::shared_ptr<GroundStation>>& getGroundStations() const;
+    const std::map<std::string, std::string>& getAircraftPathFiles() const;
 
 private:
     // Private constructor prevents external instantiation
@@ -49,4 +51,5 @@ private:
     ~ConfigIntake() = default;
 
     std::vector<std::shared_ptr<GroundStation>> groundStations_;
+    std::map<std::string, std::string> aircraftPathFiles_;
 };

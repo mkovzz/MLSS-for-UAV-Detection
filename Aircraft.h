@@ -54,6 +54,7 @@ private:
     std::vector<PathPoint> path_;
     bool loaded_ = false;
     bool active_ = false;
+    double time_s_ = 0.0;
     Ephemeris::State state_;
     Ephemeris ephemeris_;
 };

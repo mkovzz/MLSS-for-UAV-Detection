@@ -1,11 +1,14 @@
 #include <fstream>
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 
-#include "run_controller.h"
+#include "RunContoller.h"
+#include "AircraftReplay.h"
 #include "ConfigIntake.h"
-#include "TimeStepScheduler.h"
-#include "physics_engine_main.h"
+#include "ConstellationGenerator.h"
+#include "Time_and_step_scheduler.h"
+#include "physis_engine_main.h"
 
 void RunController::commandLoop()
 {
@@ -82,9 +85,22 @@ bool RunController::handleCommand(const std::string& line)
 
 bool RunController::loadConfig(const std::string& path)
 {
-    std::ifstream file(path);
+    std::string requestedPath = path;
+    if (requestedPath.size() >= 2 && requestedPath.front() == '"' && requestedPath.back() == '"') {
+        requestedPath = requestedPath.substr(1, requestedPath.size() - 2);
+    }
+
+    std::filesystem::path configPath(requestedPath);
+    std::ifstream file(configPath);
+
+    if (!file && !configPath.is_absolute()) {
+        const std::filesystem::path sourceDirectory = std::filesystem::path(__FILE__).parent_path();
+        configPath = sourceDirectory / configPath;
+        file.open(configPath);
+    }
+
     if (!file) {
-        std::cout << "could not open '" << path << "'\n";
+        std::cout << "could not open '" << requestedPath << "'\n";
         return false;
     }
 
@@ -107,6 +123,8 @@ int RunController::startProcessing()
         // Send D-01. The return value is ignored on purpose: a rejection is reported to the HealthMonitor,
         // which ProduceEphemerisTable() checks.
         ConfigIntake::Instance->ingest(config_);
+        ConstellationGenerator::Instance->generate(config_);
+        AircraftReplay::Instance->loadPaths(ConfigIntake::Instance->getAircraftPathFiles());
 
         // Send run controls
         TimeStepScheduler::Instance->configure(controls_.startTime_s, controls_.endTime_s,
