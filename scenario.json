@@ -1,0 +1,19 @@
+{
+  "satellites": [
+    {
+      "longitude_rad": 0.0,
+      "latitude_rad": 0.0,
+      "altitude_km": 400.0,
+      "heading_rad": 1.57079632679
+    }
+  ],
+  "groundStations": [
+    {
+      "id": "GS-1",
+      "longitude_rad": 0.0,
+      "latitude_rad": 0.0,
+      "altitude_km": 0.0
+    }
+  ],
+  "aircraft": []
+}

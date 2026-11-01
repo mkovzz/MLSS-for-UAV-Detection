@@ -1,55 +1,22 @@
-#include "GroundStation.h"
+﻿#include "GroundStation.h"
+
+#include <limits>
 
 #include "UnitConverter.h"
 
-GroundStation::GroundStation() = default;
+GroundStation::GroundStation(const std::string& id, const Vector3d& earthFixedPosition_km) : id_(id), earthFixedPosition_km_(earthFixedPosition_km) {}
+void GroundStation::update(double time_s) { time_s_ = time_s; state_.position = UnitConverter::ecefToEci(earthFixedPosition_km_, time_s); state_.velocity = {}; }
+void GroundStation::recordEphemeris() { ephemeris_.samples[time_s_] = state_; }
+const std::string& GroundStation::getId() const { return id_; }
+Ephemeris::State GroundStation::getState() const { return state_; }
+const Ephemeris& GroundStation::getEphemeris() const { return ephemeris_; }
 
-GroundStation::GroundStation(double longitude, double latitude, double altitude, std::string identifier)
-	: position_(UnitConverter::llaToEcef(longitude, latitude, altitude)),
-	  id_(std::move(identifier)) {
-	registry().push_back(*this);
-}
-
-Vector3d GroundStation::getPosition() const {
-	return position_;
-}
-
-void GroundStation::setPosition(const Vector3d& position) {
-	position_ = position;
-}
-
-const std::string& GroundStation::getId() const {
-	return id_;
-}
-
-void GroundStation::setId(const std::string& identifier) {
-	id_ = identifier;
-}
-
-std::vector<GroundStation>& GroundStation::registry() {
-	static std::vector<GroundStation> stations;
-	return stations;
-}
-
-const std::vector<GroundStation>& GroundStation::getRegistry() {
-	return registry();
-}
-
-GroundStation GroundStation::GetClosest(Vector3d point) {
-	const auto& stations = registry();
-	if (stations.empty()) {
-		return {};
-	}
-
-	std::size_t best = 0;
-	double best_d2 = -1.0;
-	for (std::size_t i = 0; i < stations.size(); ++i) {
-		const Vector3d d = stations[i].getPosition() - point;
-		const double d2 = d.Dot(d);
-		if (best_d2 < 0.0 || d2 < best_d2) {
-			best_d2 = d2;
-			best = i;
-		}
-	}
-	return stations[best];
+std::shared_ptr<GroundStation> GroundStation::getClosest(const std::vector<std::shared_ptr<GroundStation>>& stations, const Vector3d& point) {
+    std::shared_ptr<GroundStation> closest;
+    double bestDistance = std::numeric_limits<double>::max();
+    for (const auto& station : stations) {
+        const double distance = (station->getState().position - point).Dot(station->getState().position - point);
+        if (distance < bestDistance) { bestDistance = distance; closest = station; }
+    }
+    return closest;
 }

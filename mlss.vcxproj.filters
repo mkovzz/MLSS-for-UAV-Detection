@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Satellite.cpp">
+    <ClCompile Include="SatelliteBody.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="constellation.cpp">
@@ -38,7 +38,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Satellite.h">
+    <ClInclude Include="SatelliteBody.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Vector3d.h">

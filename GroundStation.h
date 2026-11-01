@@ -1,43 +1,47 @@
 #pragma once
 
 #include <string>
+#include <memory>
 #include <vector>
-
+#include "Ephemeris.h"
 #include "Vector3d.h"
 
-// Ground station: a fixed ECEF position converted at load (design 4.3)
+/// <summary>
+/// FBD block "Ground Station". One instance per station (not a singleton); the shared list is owned by ConfigIntake.
+/// Fixed to the Earth, with an ID and its own ephemeris. Its Earth-fixed position is given once (converted from lon/lat/alt at load),
+/// and rotated into ECI at each time t so every ephemeris in the engine shares one frame. Velocity is not tracked (left zero).
+/// In: Position (ConfigIntake), time (s). Out: ephemeris to OutputWriter.
+/// </summary>
 class GroundStation {
 public:
+    /// <param name="id">Unique station identifier.</param>
+    /// <param name="earthFixedPosition_km">Position in the Earth-fixed frame [km].</param>
+    GroundStation(const std::string& id, const Vector3d& earthFixedPosition_km);
 
-	/**
-	* @brief Default constructor for ground
-	* @param None
-	* @return Instantiated ground station object
-	*/
-	GroundStation();
+    /// <summary>Computes the station's ECI position at time t.</summary>
+    /// <param name="time_s">Simulation time [s since start].</param>
+    void update(double time_s);
 
-	/**
-	* @brief Constructor for 
-	* @param None
-	* @return Instantiated ground station object
-	*/
-	GroundStation(double longitude, double latitude, double altitude, std::string identifier = "");
+    /// <summary>Appends the current state (as of the last update()) to this station's ephemeris. Called on storage steps only.</summary>
+    void recordEphemeris();
 
-	//Getters and Setters
-	Vector3d getPosition() const;
-	void setPosition(const Vector3d& position);
+    /// <returns>Station identifier.</returns>
+    const std::string& getId() const;
 
-	const std::string& getId() const;
-	void setId(const std::string& identifier);
+    /// <returns>Current position (km), ECI. Velocity is zero.</returns>
+    Ephemeris::State getState() const;
 
-	// Returns the registered ground station closest to the given ECEF point.
-	// If none are registered, returns a default-constructed station.
-	static GroundStation GetClosest(Vector3d point);
+    /// <returns>The stored samples of this station.</returns>
+    const Ephemeris& getEphemeris() const;
 
-	static const std::vector<GroundStation>& getRegistry();
+    static std::shared_ptr<GroundStation> getClosest(
+        const std::vector<std::shared_ptr<GroundStation>>& stations,
+        const Vector3d& point);
 
 private:
-	Vector3d position_{};
-	std::string id_{};
-	static std::vector<GroundStation>& registry();
+    std::string id_;
+    Vector3d earthFixedPosition_km_;
+    double time_s_ = 0.0;
+    Ephemeris::State state_;
+    Ephemeris ephemeris_;
 };

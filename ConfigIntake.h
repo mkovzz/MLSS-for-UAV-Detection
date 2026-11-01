@@ -1,0 +1,55 @@
+#pragma once
+
+#include <memory>
+#include <map>
+#include <vector>
+#include "GroundStation.h"
+#include "ScenarioConfig.h"
+
+/// <summary>
+/// FBD block "Config Intake".
+/// In: D-01 (Backend Controls; RunController stands in for now).
+/// Out: Position to GroundStation, D-01 to ConstellationGenerator, Aircraft paths to AircraftReplay, Early rejection to HealthMonitor.
+/// Created by InstantiateSubsystem(); Initialize() does not create any other component.
+/// Creates the ground stations (during ingest()) and owns their shared list. Singleton.
+/// </summary>
+class ConfigIntake {
+public:
+    // Delete copy and assignment to enforce a single instance
+    ConfigIntake(const ConfigIntake&) = delete;
+    ConfigIntake& operator=(const ConfigIntake&) = delete;
+
+    // Public static field for global access
+    inline static ConfigIntake* Instance = nullptr;
+
+    // Initialization and Cleanup methods
+    static void Initialize() {
+        if (Instance == nullptr) {
+            Instance = new ConfigIntake();
+        }
+    }
+
+    static void Shutdown() {
+        if (Instance != nullptr) {
+            delete Instance;
+            Instance = nullptr;
+        }
+    }
+
+    /// <summary>Reads D-01 and distributes it. Sends an early rejection to HealthMonitor if the configuration cannot be run.</summary>
+    /// <param name="config">D-01.</param>
+    /// <returns>true if accepted, false if rejected.</returns>
+    bool ingest(const ScenarioConfig& config);
+
+    /// <returns>The shared list of ground stations.</returns>
+    const std::vector<std::shared_ptr<GroundStation>>& getGroundStations() const;
+    const std::map<std::string, std::string>& getAircraftPathFiles() const;
+
+private:
+    // Private constructor prevents external instantiation
+    ConfigIntake() = default;
+    ~ConfigIntake() = default;
+
+    std::vector<std::shared_ptr<GroundStation>> groundStations_;
+    std::map<std::string, std::string> aircraftPathFiles_;
+};
