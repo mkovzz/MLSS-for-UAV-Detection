@@ -15,6 +15,17 @@
       "altitude_km": 0.0
     }
   ],
-  "aircraft": []
-
+  "aircraft": {
+    "count": 10,
+    "speed_kmps": {
+      "min": 0.20,
+      "max": 0.28
+    },
+    "altitude_km": {
+      "min": 8.0,
+      "max": 12.0
+    },
+    "airport_database": "gadb_declatlon.csv",
+    "seed": 12345
+  }
 }

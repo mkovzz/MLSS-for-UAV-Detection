@@ -53,7 +53,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ItemDefinitionGroup><Link><AdditionalDependencies>winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies></Link></ItemDefinitionGroup>
+  
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="Shared">
@@ -142,7 +142,7 @@
   <ItemGroup>
     <ClCompile Include="..\Aircraft.cpp" />
     <ClCompile Include="..\AircraftReplay.cpp" />
-    <ClCompile Include="..\OpenSkyClient.cpp" />
+    <ClCompile Include="..\FlightGenerator.cpp" />
     <ClCompile Include="..\ConfigIntake.cpp" />
     <ClCompile Include="..\ConstellationGenerator.cpp" />
     <ClCompile Include="..\GroundStation.cpp" />
@@ -159,7 +159,7 @@
   <ItemGroup>
     <ClInclude Include="..\Aircraft.h" />
     <ClInclude Include="..\AircraftReplay.h" />
-    <ClInclude Include="..\OpenSkyClient.h" />
+    <ClInclude Include="..\FlightGenerator.h" />
     <ClInclude Include="..\ConfigIntake.h" />
     <ClInclude Include="..\ConstellationGenerator.h" />
     <ClInclude Include="..\Earth.h" />
@@ -185,3 +185,4 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
+

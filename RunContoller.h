@@ -1,9 +1,7 @@
 #pragma once
 
 #include <string>
-#include <vector>
 #include "ScenarioConfig.h"
-#include "Aircraft.h"
 
 /// <summary>
 /// Stand-in for the full "Backend Controls" subsystem. As of now it is only a unit tester for the physics engine, driven by commands
@@ -13,10 +11,7 @@
 /// Commands (one per line):
 ///   help                                   list commands
 ///   load <file>                           read D-01 (JSON text) from a file
-///   load flight data <file.bin>            append cached OpenSky aircraft paths
 ///   settings <start> <end> <step> <rate>   run controls: times in seconds, rate = store every Nth step
-///   opensky <unix_time> <duration_s> [max_aircraft] <credentials-json>  fetch and save tracks as flightsN.bin
-///   check opensky usage <credentials-json>  show current OpenSky API credit headers
 ///   status                                 show what has been loaded / set
 ///   run                                    fire the start signal (blocks until the run ends)
 ///   quit                                   exit
@@ -82,7 +77,6 @@ private:
     /// <summary>Reads the file at path into config_.</summary>
     /// <returns>true on success.</returns>
     bool loadConfig(const std::string& path);
-    bool loadFlightData(const std::string& path);
 
     void printHelp() const;
     void printStatus() const;
@@ -91,10 +85,4 @@ private:
     RunControls controls_;
     bool configLoaded_ = false;
     bool controlsSet_ = false;
-    std::string openSkyCredentialsJson_;
-    long long openSkySnapshotTime_s_ = 0;
-    double openSkyDuration_s_ = 0.0;
-    int openSkyMaxAircraft_ = 0;
-    double aircraftAltitude_km_ = 10.0;
-    std::vector<std::vector<Aircraft::PathPoint>> cachedFlightPaths_;
 };

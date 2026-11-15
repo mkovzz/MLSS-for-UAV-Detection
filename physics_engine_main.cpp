@@ -11,6 +11,7 @@
 #include "HealthMonitor.h"
 #include "OutputWriter.h"
 #include "Time_and_step_scheduler.h"
+#include "FlightGenerator.h"
 
 int InstantiateSubsystem() {
 
@@ -18,6 +19,11 @@ int InstantiateSubsystem() {
 	HealthMonitor::Initialize();
 	if (HealthMonitor::Instance == nullptr) {
 		std::cerr << "Error: HealthMonitor::Initialize() failed." << std::endl;
+		return -1;
+	}
+	FlightGenerator::Initialize();
+	if (FlightGenerator::Instance == nullptr) {
+		std::cerr << "Error: FlightGenerator::Initialize() failed." << std::endl;
 		return -1;
 	}
 
@@ -67,6 +73,7 @@ int ShutdownSubsystem() {
 	// destroy in the reverse order of InstantiateSubsystem(); Shutdown() does nothing for a singleton that does not exist
 	OutputWriter::Shutdown();
 	TimeStepScheduler::Shutdown();
+	FlightGenerator::Shutdown();
 	ConfigIntake::Shutdown();
 	AircraftReplay::Shutdown();
 	ConstellationGenerator::Shutdown();

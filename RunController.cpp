@@ -1,12 +1,11 @@
 #include <fstream>
 #include <filesystem>
 #include <iostream>
-#include <regex>
 #include <sstream>
 
 #include "RunContoller.h"
 #include "AircraftReplay.h"
-#include "OpenSkyClient.h"
+#include "FlightGenerator.h"
 #include "ConfigIntake.h"
 #include "ConstellationGenerator.h"
 #include "Time_and_step_scheduler.h"
@@ -44,29 +43,8 @@ bool RunController::handleCommand(const std::string& line)
         if (path.empty()) {
             std::cout << "usage: load <file>\n";
         }
-        else if (path.rfind("flight data ", 0) == 0) {
-            if (!loadFlightData(path.substr(12))) std::cout << "flight data load failed\n";
-        }
         else if (loadConfig(path)) {
             std::cout << "D-01 loaded (" << config_.json.size() << " bytes)\n";
-        }
-    }
-    else if (command == "check") {
-        std::string usage;
-        std::getline(in >> std::ws, usage);
-        if (usage.rfind("opensky usage ", 0) != 0) {
-            std::cout << "usage: check opensky usage <credentials-json>\n";
-        }
-        else {
-            const OpenSkyUsageResult result = OpenSkyClient::checkUsage(usage.substr(15));
-            if (!result.error.empty()) std::cout << result.error << "\n";
-            std::cout << "OpenSky usage probe: HTTP " << result.httpStatus << " (" << result.endpoint << ")\n";
-            if (!result.rateLimitRemaining.empty()) {
-                std::cout << "OpenSky API credits remaining: " << result.rateLimitRemaining << "\n";
-            }
-            if (!result.retryAfterSeconds.empty()) {
-                std::cout << "OpenSky retry after: " << result.retryAfterSeconds << " seconds\n";
-            }
         }
     }
     else if (command == "settings") {
@@ -81,95 +59,6 @@ bool RunController::handleCommand(const std::string& line)
             controls_ = c;
             controlsSet_ = true;
             std::cout << "run controls set\n";
-        }
-    }
-    else if (command == "opensky") {
-        std::string arguments;
-        std::getline(in >> std::ws, arguments);
-        const std::regex limitedPattern(R"(^([0-9]+)\s+([0-9]+(?:\.[0-9]+)?)\s+([0-9]+)\s+(\{.*\})$)");
-        const std::regex legacyPattern(R"(^([0-9]+)\s+([0-9]+(?:\.[0-9]+)?)\s+(\{.*\})$)");
-        std::smatch match;
-        if (std::regex_match(arguments, match, limitedPattern)) {
-            openSkySnapshotTime_s_ = std::stoll(match[1].str());
-            openSkyDuration_s_ = std::stod(match[2].str());
-            openSkyMaxAircraft_ = std::stoi(match[3].str());
-            openSkyCredentialsJson_ = match[4].str();
-            if (openSkySnapshotTime_s_ <= 0 || openSkySnapshotTime_s_ > 4102444800LL
-                || openSkyDuration_s_ <= 0.0 || openSkyMaxAircraft_ < 1) {
-                openSkyCredentialsJson_.clear();
-                std::cout << "invalid: unix_time must be Unix seconds (not milliseconds or an extra zero), "
-                    << "duration must be > 0, and max_aircraft must be >= 1\n";
-            }
-            else {
-                std::cout << "OpenSky import configured for Unix time " << openSkySnapshotTime_s_
-                    << " (max " << openSkyMaxAircraft_ << " aircraft)\n";
-                const OpenSkyImportResult imported = OpenSkyClient::fetchPaths(
-                    openSkyCredentialsJson_, openSkySnapshotTime_s_, openSkyDuration_s_, aircraftAltitude_km_, openSkyMaxAircraft_);
-                if (!imported.error.empty()) {
-                    std::cout << "OpenSky import failed: " << imported.error << "\n";
-                    openSkyCredentialsJson_.clear();
-                }
-                else {
-                    std::filesystem::path cachePath;
-                    for (int number = 1;; ++number) {
-                        cachePath = "flights" + std::to_string(number) + ".bin";
-                        if (!std::filesystem::exists(cachePath)) break;
-                    }
-                    std::string cacheError;
-                    if (OpenSkyClient::savePaths(cachePath.string(), imported.paths, cacheError)) {
-                        std::cout << "OpenSky imported " << imported.paths.size()
-                            << " aircraft and saved " << cachePath.string() << "\n";
-                    }
-                    else {
-                        std::cout << "OpenSky cache save failed: " << cacheError << "\n";
-                    }
-                    if (!imported.rateLimitRemaining.empty()) {
-                        std::cout << "OpenSky API credits remaining: " << imported.rateLimitRemaining << "\n";
-                    }
-                }
-            }
-        }
-        else if (std::regex_match(arguments, match, legacyPattern)) {
-            openSkySnapshotTime_s_ = std::stoll(match[1].str());
-            openSkyDuration_s_ = std::stod(match[2].str());
-            openSkyMaxAircraft_ = 0;
-            openSkyCredentialsJson_ = match[3].str();
-            if (openSkySnapshotTime_s_ <= 0 || openSkySnapshotTime_s_ > 4102444800LL
-                || openSkyDuration_s_ <= 0.0) {
-                openSkyCredentialsJson_.clear();
-                std::cout << "invalid: unix_time must be Unix seconds (not milliseconds or an extra zero) "
-                    << "and duration must be > 0 seconds\n";
-            }
-            else {
-                std::cout << "OpenSky import configured for Unix time " << openSkySnapshotTime_s_ << "\n";
-                const OpenSkyImportResult imported = OpenSkyClient::fetchPaths(
-                    openSkyCredentialsJson_, openSkySnapshotTime_s_, openSkyDuration_s_, aircraftAltitude_km_, openSkyMaxAircraft_);
-                if (!imported.error.empty()) {
-                    std::cout << "OpenSky import failed: " << imported.error << "\n";
-                    openSkyCredentialsJson_.clear();
-                }
-                else {
-                    std::filesystem::path cachePath;
-                    for (int number = 1;; ++number) {
-                        cachePath = "flights" + std::to_string(number) + ".bin";
-                        if (!std::filesystem::exists(cachePath)) break;
-                    }
-                    std::string cacheError;
-                    if (OpenSkyClient::savePaths(cachePath.string(), imported.paths, cacheError)) {
-                        std::cout << "OpenSky imported " << imported.paths.size()
-                            << " aircraft and saved " << cachePath.string() << "\n";
-                    }
-                    else {
-                        std::cout << "OpenSky cache save failed: " << cacheError << "\n";
-                    }
-                    if (!imported.rateLimitRemaining.empty()) {
-                        std::cout << "OpenSky API credits remaining: " << imported.rateLimitRemaining << "\n";
-                    }
-                }
-            }
-        }
-        else {
-            std::cout << "usage: opensky <unix_time> <duration_s> [max_aircraft] <credentials-json>\n";
         }
     }
     else if (command == "status") {
@@ -241,9 +130,16 @@ int RunController::startProcessing()
             ShutdownSubsystem();
             return -1;
         }
-        if (!cachedFlightPaths_.empty()) {
-            const int cachedCount = AircraftReplay::Instance->loadSynthesizedPaths(cachedFlightPaths_);
-            std::cout << "loaded " << cachedCount << " cached aircraft into run\n";
+        std::string generationError;
+        const auto generatedPaths = FlightGenerator::Instance->generate(config_, generationError);
+        if (!generationError.empty()) {
+            std::cout << "flight generation failed: " << generationError << "\n";
+            ShutdownSubsystem();
+            return -1;
+        }
+        if (!generatedPaths.empty()) {
+            const int generatedCount = AircraftReplay::Instance->loadSynthesizedPaths(generatedPaths);
+            std::cout << "generated " << generatedCount << " aircraft\n";
         }
         // Send run controls
         TimeStepScheduler::Instance->configure(controls_.startTime_s, controls_.endTime_s,
@@ -272,26 +168,11 @@ void RunController::printHelp() const
         "Run Controller (physics engine test harness)\n"
         "  help                                   this list\n"
         "  load <file>                            read D-01 (JSON text) from a file\n"
-        "  load flight data <file.bin>             append cached OpenSky aircraft paths\n"
         "  settings <start> <end> <step> <rate>   run controls: times in seconds, rate = store every Nth step\n"
-        "  opensky <unix_time> <duration_s> [max_aircraft] <credentials-json>  fetch and save OpenSky tracks\n"
-        "  check opensky usage <credentials-json>  show current OpenSky API credit headers\n"
+        "  flight generation is configured in scenario.json under the aircraft object\n"
         "  status                                 show what is loaded / set\n"
         "  run                                    fire the start signal\n"
         "  quit                                   exit\n";
-}
-
-bool RunController::loadFlightData(const std::string& path)
-{
-    std::vector<std::vector<Aircraft::PathPoint>> paths;
-    std::string error;
-    if (!OpenSkyClient::loadPaths(path, paths, error)) {
-        std::cout << "could not load '" << path << "': " << error << "\n";
-        return false;
-    }
-    cachedFlightPaths_.insert(cachedFlightPaths_.end(), paths.begin(), paths.end());
-    std::cout << "loaded " << paths.size() << " cached aircraft from " << path << "\n";
-    return !paths.empty();
 }
 
 void RunController::printStatus() const
@@ -304,14 +185,5 @@ void RunController::printStatus() const
     else {
         std::cout << "run controls: not set\n";
     }
-    if (!openSkyCredentialsJson_.empty()) {
-        std::cout << "OpenSky: configured for Unix time " << openSkySnapshotTime_s_ << " (duration "
-            << openSkyDuration_s_ << " s";
-        if (openSkyMaxAircraft_ > 0) std::cout << ", max " << openSkyMaxAircraft_ << " aircraft";
-        std::cout << ")\n";
-    }
-    else {
-        std::cout << "OpenSky: not configured\n";
-    }
-    std::cout << "Cached flight paths selected for run: " << cachedFlightPaths_.size() << "\n";
+    std::cout << "aircraft generation: configured in scenario.json\n";
 }
