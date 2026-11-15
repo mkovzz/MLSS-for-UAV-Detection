@@ -21,4 +21,7 @@ void TimeStepScheduler::pause() { paused_ = true; }
 void TimeStepScheduler::resume() { paused_ = false; }
 void TimeStepScheduler::stop() { stopped_ = true; }
 double TimeStepScheduler::getTime() const { return currentTime_s_; }
+double TimeStepScheduler::getStartTime() const { return startTime_s_; }
+double TimeStepScheduler::getEndTime() const { return endTime_s_; }
+double TimeStepScheduler::getStepSize() const { return stepSize_s_; }
 int TimeStepScheduler::getStorageRate() const { return storageRate_; }

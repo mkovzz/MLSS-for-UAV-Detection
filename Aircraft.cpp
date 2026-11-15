@@ -19,12 +19,20 @@ Aircraft::Aircraft(const std::string& id, const std::string& file) : id_(id) {
     loaded_ = !path_.empty();
 }
 
+Aircraft::Aircraft(const std::string& id, const std::vector<PathPoint>& path) : id_(id), path_(path) {
+    std::sort(path_.begin(), path_.end(), [](const PathPoint& a, const PathPoint& b) { return a.time_s < b.time_s; });
+    loaded_ = !path_.empty();
+}
+
 bool Aircraft::isLoaded() const { return loaded_; }
 
 void Aircraft::update(double time_s) {
     time_s_ = time_s;
     active_ = loaded_ && time_s >= path_.front().time_s && time_s <= path_.back().time_s;
-    if (!active_) return;
+    if (!active_) {
+        state_ = {};
+        return;
+    }
 
     auto after = std::lower_bound(path_.begin(), path_.end(), time_s, [](const PathPoint& point, double value) { return point.time_s < value; });
     if (after == path_.begin() || after == path_.end()) {
@@ -40,7 +48,7 @@ void Aircraft::update(double time_s) {
 }
 
 bool Aircraft::isActive() const { return active_; }
-void Aircraft::recordEphemeris() { if (active_) ephemeris_.samples[time_s_] = state_; }
+void Aircraft::recordEphemeris() { ephemeris_.samples[time_s_] = state_; }
 const std::string& Aircraft::getId() const { return id_; }
 Ephemeris::State Aircraft::getState() const { return state_; }
 const Ephemeris& Aircraft::getEphemeris() const { return ephemeris_; }

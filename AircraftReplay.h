@@ -39,6 +39,9 @@ public:
     /// <returns>Number of aircraft loaded, -1 if any file is missing or unparsable.</returns>
     int loadPaths(const std::map<std::string, std::string>& flightPathFilesById);
 
+    /// <summary>Appends synthesized paths as A1, A2, ... to the replay list.</summary>
+    int loadSynthesizedPaths(const std::vector<std::vector<Aircraft::PathPoint>>& paths);
+
     /// <returns>The shared list of aircraft.</returns>
     const std::vector<std::shared_ptr<Aircraft>>& getAircraft() const;
 

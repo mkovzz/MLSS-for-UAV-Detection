@@ -13,10 +13,18 @@
 /// </summary>
 class Aircraft {
 public:
+    struct PathPoint {
+        double time_s = 0.0;
+        Vector3d earthFixedPosition_km;
+    };
+
     /// <summary>Loads and converts the flight path.</summary>
     /// <param name="id">Unique aircraft identifier.</param>
     /// <param name="flightPathFile">Flight path data file (CSV).</param>
     Aircraft(const std::string& id, const std::string& flightPathFile);
+
+    /// <summary>Creates an aircraft from an already synthesized Earth-fixed path.</summary>
+    Aircraft(const std::string& id, const std::vector<PathPoint>& path);
 
     /// <returns>true if the flight path was read successfully.</returns>
     bool isLoaded() const;
@@ -31,7 +39,7 @@ public:
     /// <returns>true if the last update() fell inside the active window.</returns>
     bool isActive() const;
 
-    /// <summary>Appends the current state to this aircraft's ephemeris if it is active. Called on storage steps only.</summary>
+    /// <summary>Appends the current state, or a zero state while inactive, to this aircraft's ephemeris.</summary>
     void recordEphemeris();
 
     /// <returns>Aircraft identifier.</returns>
@@ -44,12 +52,6 @@ public:
     const Ephemeris& getEphemeris() const;
 
 private:
-    /// One recorded point of the flight path.
-    struct PathPoint {
-        double time_s = 0.0;
-        Vector3d earthFixedPosition_km;
-    };
-
     std::string id_;
     std::vector<PathPoint> path_;
     bool loaded_ = false;

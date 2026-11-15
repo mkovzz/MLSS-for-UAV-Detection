@@ -43,6 +43,9 @@ public:
 
     /// <returns>Current simulation time [s].</returns>
     double getTime() const;
+    double getStartTime() const;
+    double getEndTime() const;
+    double getStepSize() const;
 
     /// <returns>Storage rate: store every Nth step.</returns>
     int getStorageRate() const;

@@ -53,6 +53,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup><Link><AdditionalDependencies>winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies></Link></ItemDefinitionGroup>
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="Shared">
@@ -141,6 +142,7 @@
   <ItemGroup>
     <ClCompile Include="..\Aircraft.cpp" />
     <ClCompile Include="..\AircraftReplay.cpp" />
+    <ClCompile Include="..\OpenSkyClient.cpp" />
     <ClCompile Include="..\ConfigIntake.cpp" />
     <ClCompile Include="..\ConstellationGenerator.cpp" />
     <ClCompile Include="..\GroundStation.cpp" />
@@ -148,7 +150,7 @@
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\OrbitalMathSolver.cpp" />
     <ClCompile Include="..\OutputWriter.cpp" />
-    <ClCompile Include="..\physis_engine_main.cpp" />
+    <ClCompile Include="..\physics_engine_main.cpp" />
     <ClCompile Include="..\RunController.cpp" />
     <ClCompile Include="..\SatelliteBody.cpp" />
     <ClCompile Include="..\TimeStepScheduler.cpp" />
@@ -157,6 +159,7 @@
   <ItemGroup>
     <ClInclude Include="..\Aircraft.h" />
     <ClInclude Include="..\AircraftReplay.h" />
+    <ClInclude Include="..\OpenSkyClient.h" />
     <ClInclude Include="..\ConfigIntake.h" />
     <ClInclude Include="..\ConstellationGenerator.h" />
     <ClInclude Include="..\Earth.h" />
