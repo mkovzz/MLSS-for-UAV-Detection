@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 
-#include "physis_engine_main.h"
+#include "physics_engine_main.h"
 #include "AircraftReplay.h"
 #include "ConfigIntake.h"
 #include "ConstellationGenerator.h"
@@ -9,6 +9,7 @@
 #include "HealthMonitor.h"
 #include "OutputWriter.h"
 #include "Time_and_step_scheduler.h"
+#include "FlightGenerator.h"
 
 int InstantiateSubsystem() {
 
@@ -16,6 +17,11 @@ int InstantiateSubsystem() {
 	HealthMonitor::Initialize();
 	if (HealthMonitor::Instance == nullptr) {
 		std::cerr << "Error: HealthMonitor::Initialize() failed." << std::endl;
+		return -1;
+	}
+	FlightGenerator::Initialize();
+	if (FlightGenerator::Instance == nullptr) {
+		std::cerr << "Error: FlightGenerator::Initialize() failed." << std::endl;
 		return -1;
 	}
 
@@ -65,6 +71,7 @@ int ShutdownSubsystem() {
 	// destroy in the reverse order of InstantiateSubsystem(); Shutdown() does nothing for a singleton that does not exist
 	OutputWriter::Shutdown();
 	TimeStepScheduler::Shutdown();
+	FlightGenerator::Shutdown();
 	ConfigIntake::Shutdown();
 	AircraftReplay::Shutdown();
 	ConstellationGenerator::Shutdown();
@@ -136,15 +143,15 @@ int ProduceEphemerisTable() {
 			return -2;
 		}
 		// 
-		//    e. Otherwise give Output Writer the satellite states, ground-station positions and aircraft positions.
-		//       Output Writer converts the Earth-fixed ones into the satellites' frame and keeps the step
-		//       only if t lands on a storage-interval boundary.
+		//    e. Otherwise give Output Writer the satellites states, ground-station positions and aircraft positions.
+		//       Output Writer records every simulation step. Storage-rate filtering belongs to the future Run Data Store.
 		OutputWriter::Instance->recordStep(ConstellationGenerator::Instance->getSatellites(),
 			ConfigIntake::Instance->getGroundStations(), AircraftReplay::Instance->getAircraft());
 
 		// advance (see "Prompt scheduler to advance" above); it runs once the step above has been processed
 		running = TimeStepScheduler::Instance->advance();
 	}
+
 
 	//if no abort signal was fired return 0 to indicate success
 

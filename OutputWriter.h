@@ -12,8 +12,7 @@
 /// FBD block "Output Writer".
 /// In: the entities (satellites, ground stations, aircraft) each step, and the storage rate (TimeStepScheduler).
 /// Out: D-02 to the Environment Model and the Run Data Store, and a printout.
-/// Decides which steps are stored: with a storage rate of N it stores every Nth call to recordStep() (the first call, then
-/// N, 2N, ...), counted as whole steps so no floating-point time comparison is involved.
+/// The current ephemeris records every simulation step. The storage rate is retained for future Run Data Store output.
 /// Every ephemeris is in ECI; conversion to longitude / latitude / altitude happens only here, on output.
 /// Singleton.
 /// </summary>
@@ -40,13 +39,13 @@ public:
         }
     }
 
-    /// <summary>Sets how often steps are stored and restarts the step count.</summary>
-    /// <param name="stepsPerSample">Storage rate: store every Nth step (1 = every step). Must be at least 1.</param>
+    /// <summary>Sets the future Run Data Store storage rate.</summary>
+    /// <param name="stepsPerSample">Reserved storage rate: store every Nth step. Must be at least 1.</param>
     void setStorageRate(int stepsPerSample);
 
     /// <summary>
-    /// Called once per time step, after every entity has been updated. If this step is a storage step, tells each entity
-    /// (aircraft only if active) to append its current state to its own ephemeris.
+    /// Called once per time step, after every entity has been updated. Every call appends the current state to the
+    /// current ephemeris; storage-rate filtering is not applied to D-02.
     /// </summary>
     /// <param name="satellites">Shared list from ConstellationGenerator.</param>
     /// <param name="groundStations">Shared list from ConfigIntake.</param>
@@ -77,5 +76,4 @@ private:
     ~OutputWriter() = default;
 
     int storageRate_ = 1;
-    long long stepCount_ = 0;
 };

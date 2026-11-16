@@ -5,7 +5,6 @@
 void OutputWriter::setStorageRate(int n)
 {
     storageRate_ = n < 1 ? 1 : n;
-    stepCount_ = 0;
 }
 
 void OutputWriter::recordStep(
@@ -13,11 +12,6 @@ void OutputWriter::recordStep(
     const std::vector<std::shared_ptr<GroundStation>>& groundStations,
     const std::vector<std::shared_ptr<Aircraft>>& aircraft)
 {
-    ++stepCount_;
-    if (stepCount_ != 1 && stepCount_ % storageRate_ != 0) {
-        return;
-    }
-
     for (const auto& satellite : satellites) {
         satellite->recordEphemeris();
     }

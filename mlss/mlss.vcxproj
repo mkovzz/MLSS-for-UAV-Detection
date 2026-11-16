@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="..\Aircraft.cpp" />
     <ClCompile Include="..\AircraftReplay.cpp" />
+    <ClCompile Include="..\FlightGenerator.cpp" />
     <ClCompile Include="..\ConfigIntake.cpp" />
     <ClCompile Include="..\ConstellationGenerator.cpp" />
     <ClCompile Include="..\GroundStation.cpp" />
@@ -148,8 +149,7 @@
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\OrbitalMathSolver.cpp" />
     <ClCompile Include="..\OutputWriter.cpp" />
-    <ClCompile Include="..\physis_engine_main.cpp" />
-    <ClCompile Include="..\RunController.cpp" />
+    <ClCompile Include="..\physics_engine_main.cpp" />
     <ClCompile Include="..\SatelliteBody.cpp" />
     <ClCompile Include="..\TimeStepScheduler.cpp" />
     <ClCompile Include="..\UnitConverter.cpp" />
@@ -157,6 +157,7 @@
   <ItemGroup>
     <ClInclude Include="..\Aircraft.h" />
     <ClInclude Include="..\AircraftReplay.h" />
+    <ClInclude Include="..\FlightGenerator.h" />
     <ClInclude Include="..\ConfigIntake.h" />
     <ClInclude Include="..\ConstellationGenerator.h" />
     <ClInclude Include="..\Earth.h" />
@@ -170,7 +171,6 @@
     <ClInclude Include="..\orbital_elements.h" />
     <ClInclude Include="..\OutputWriter.h" />
     <ClInclude Include="..\physis_engine_main.h" />
-    <ClInclude Include="..\RunContoller.h" />
     <ClInclude Include="..\SatelliteBody.h" />
     <ClInclude Include="..\SatelliteInitialConditions.h" />
     <ClInclude Include="..\ScenarioConfig.h" />
@@ -178,7 +178,19 @@
     <ClInclude Include="..\UnitConverter.h" />
     <ClInclude Include="..\Vector3d.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\PythonLauncher.py" />
+    <None Include="..\BackendControls.py" />
+    <None Include="..\RunController.py" />
+  </ItemGroup>
+  <PropertyGroup>
+    <LocalDebuggerCommand>python.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommandArguments>"$(ProjectDir)..\PythonLauncher.py"</LocalDebuggerCommandArguments>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)..\</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
+
+
