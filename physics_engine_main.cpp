@@ -1,6 +1,4 @@
 #include <iostream>
-#include <algorithm>
-#include <iomanip>
 #include <vector>
 
 #include "physics_engine_main.h"
@@ -116,16 +114,6 @@ int ProduceEphemerisTable() {
 
 		//Process time step
 		const double t = TimeStepScheduler::Instance->getTime();
-		const double progress = std::clamp((t - TimeStepScheduler::Instance->getStartTime())
-			/ (TimeStepScheduler::Instance->getEndTime() - TimeStepScheduler::Instance->getStartTime()), 0.0, 1.0);
-		const int barWidth = 30;
-		const int filled = static_cast<int>(progress * barWidth);
-		if (t == TimeStepScheduler::Instance->getStartTime()
-			|| static_cast<long long>((t - TimeStepScheduler::Instance->getStartTime()) / TimeStepScheduler::Instance->getStepSize()) % 100 == 0) {
-			std::cout << "\rEphemeris progress: [" << std::string(filled, '#')
-				<< std::string(barWidth - filled, '-') << "] " << std::fixed << std::setprecision(1)
-				<< progress * 100.0 << '%' << std::flush;
-		}
 
 		//Prompt scheduler to advance
 
@@ -155,16 +143,15 @@ int ProduceEphemerisTable() {
 			return -2;
 		}
 		// 
-		//    e. Otherwise give Output Writer the satellite states, ground-station positions and aircraft positions.
-		//       Output Writer converts the Earth-fixed ones into the satellites' frame and keeps the step
-		//       only if t lands on a storage-interval boundary.
+		//    e. Otherwise give Output Writer the satellites states, ground-station positions and aircraft positions.
+		//       Output Writer records every simulation step. Storage-rate filtering belongs to the future Run Data Store.
 		OutputWriter::Instance->recordStep(ConstellationGenerator::Instance->getSatellites(),
 			ConfigIntake::Instance->getGroundStations(), AircraftReplay::Instance->getAircraft());
 
 		// advance (see "Prompt scheduler to advance" above); it runs once the step above has been processed
 		running = TimeStepScheduler::Instance->advance();
 	}
-	std::cout << "\rEphemeris progress: [" << std::string(30, '#') << "] 100.0%\n";
+
 
 	//if no abort signal was fired return 0 to indicate success
 

@@ -18,9 +18,6 @@
     <ClCompile Include="..\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\RunController.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\TimeStepScheduler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -77,9 +74,6 @@
     <ClInclude Include="..\Time_and_step_scheduler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\RunContoller.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\OutputWriter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -133,5 +127,7 @@
     </ClInclude>
   </ItemGroup>
 </Project>
+
+
 
 
