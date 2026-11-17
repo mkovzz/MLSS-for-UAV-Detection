@@ -50,13 +50,13 @@ def rcvSensor(self, observation):
     self.time = observation.time
     self.fusion.update(observation)
 
-    return
-
-def rcvAck():
+def rcvAck(self, event):
     #function that waits for an ack from the environment model ground-truth logger
     #this will work with the rcvSensor to tell the satellite whether or not the satellite can sense a target
-    return
+    return self.mem.handleAck(event)
 
+
+#might be entirely useless because when instantiating layers, that can be defined in the object declaration
 def layer():
     #function that takes in from the Type Identifier function of the environment model to confirm what layer this satellite is in
     return
