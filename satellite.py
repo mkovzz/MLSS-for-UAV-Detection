@@ -7,6 +7,8 @@
 #These messages would be an array of numbers showing target information (positional) and requests (like handoff, coverage, etc)
 
 
+#these classes might be useless too, could a simpler approach work???
+#could these be defined functions in main or something?
 Class Message:
     #details what types each of the elements of a message can have
 
@@ -19,6 +21,12 @@ Class Fusion:
     # 
 Class Sensing:
     #distance, FOV, etc
+
+
+
+
+
+
 class SatelliteObject:
     def __init__(self, ID, layer, FOV, maxRange, time):
         self.ID = ID
