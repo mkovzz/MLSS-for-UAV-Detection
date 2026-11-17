@@ -3,6 +3,11 @@
 #include <regex>
 
 namespace {
+/// <summary>
+/// Extracts the satellites JSON array from the unchanged D-01 text.
+/// </summary>
+/// <param name="json">Original D-01 JSON text.</param>
+/// <returns>The satellites array fragment, or an empty string when absent.</returns>
 std::string section(const std::string& json) {
     const std::size_t start = json.find("\"satellites\"");
     if (start == std::string::npos) return {};
@@ -10,6 +15,13 @@ std::string section(const std::string& json) {
     const std::size_t close = json.find(']', open);
     return open == std::string::npos || close == std::string::npos ? std::string{} : json.substr(open + 1, close - open - 1);
 }
+/// <summary>
+/// Reads one numeric property from a JSON object fragment.
+/// </summary>
+/// <param name="object">JSON object fragment.</param>
+/// <param name="name">Property name.</param>
+/// <param name="fallback">Value returned when the property is absent.</param>
+/// <returns>The parsed value or fallback.</returns>
 double number(const std::string& object, const std::string& name, double fallback) {
     std::smatch match;
     const std::regex pattern("\\\"" + name + "\\\"\\s*:\\s*(-?[0-9]+(?:\\.[0-9]+)?)");
@@ -17,9 +29,15 @@ double number(const std::string& object, const std::string& name, double fallbac
 }
 }
 
+/// <summary>
+/// Creates satellite bodies from the satellite entries in D-01.
+/// </summary>
+/// <param name="config">D-01 scenario configuration.</param>
+/// <returns>The number of generated satellites, or -1 for empty configuration.</returns>
 int ConstellationGenerator::generate(const ScenarioConfig& config) {
     satellites_.clear();
     const std::string satellites = section(config.json);
+    // The engine currently uses a small regex-based intake layer rather than a full JSON library.
     const std::regex object("\\{([^}]*)\\}");
     std::smatch match;
     std::string::const_iterator begin = satellites.begin();
@@ -42,4 +60,8 @@ int ConstellationGenerator::generate(const ScenarioConfig& config) {
     return config.json.empty() ? -1 : static_cast<int>(satellites_.size());
 }
 
+/// <summary>
+/// Returns the generated satellite bodies.
+/// </summary>
+/// <returns>The generated satellite collection.</returns>
 const std::vector<std::shared_ptr<SatelliteBody>>& ConstellationGenerator::getSatellites() const { return satellites_; }

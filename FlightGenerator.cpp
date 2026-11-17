@@ -15,19 +15,32 @@ constexpr double pi = 3.14159265358979323846;
 constexpr double earthRadius_km = 6378.137;
 constexpr int routeSamples = 24;
 
-std::string jsonValue(const std::string& json, const std::string& name) {
+	/// <summary>Reads a quoted value from a JSON object fragment.</summary>
+	/// <param name="json">JSON object fragment.</param>
+	/// <param name="name">Property name.</param>
+	/// <returns>The quoted value, or an empty string when absent.</returns>
+	std::string jsonValue(const std::string& json, const std::string& name) {
 	const std::regex pattern("\\\"" + name + "\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"");
 	std::smatch match;
 	return std::regex_search(json, match, pattern) ? match[1].str() : std::string{};
 }
 
-double jsonNumber(const std::string& json, const std::string& name, double fallback) {
+	/// <summary>Reads a numeric value from a JSON object fragment.</summary>
+	/// <param name="json">JSON object fragment.</param>
+	/// <param name="name">Property name.</param>
+	/// <param name="fallback">Value returned when the property is absent.</param>
+	/// <returns>The parsed value or fallback.</returns>
+	double jsonNumber(const std::string& json, const std::string& name, double fallback) {
 	const std::regex pattern("\\\"" + name + "\\\"\\s*:\\s*(-?[0-9]+(?:\\.[0-9]+)?)");
 	std::smatch match;
 	return std::regex_search(json, match, pattern) ? std::stod(match[1].str()) : fallback;
 }
 
-std::string jsonObject(const std::string& json, const std::string& name) {
+	/// <summary>Extracts a balanced JSON object while respecting quoted braces.</summary>
+	/// <param name="json">JSON text to search.</param>
+	/// <param name="name">Object property name.</param>
+	/// <returns>The object fragment, or an empty string when absent.</returns>
+	std::string jsonObject(const std::string& json, const std::string& name) {
 	const std::size_t marker = json.find("\"" + name + "\"");
 	if (marker == std::string::npos) return {};
 	const std::size_t open = json.find('{', marker);
@@ -35,6 +48,7 @@ std::string jsonObject(const std::string& json, const std::string& name) {
 	int depth = 0;
 	bool quoted = false;
 	for (std::size_t i = open; i < json.size(); ++i) {
+		// Braces inside quoted strings must not affect object-depth tracking.
 		if (json[i] == '\"' && (i == 0 || json[i - 1] != '\\')) quoted = !quoted;
 		if (quoted) continue;
 		if (json[i] == '{') ++depth;
@@ -43,7 +57,11 @@ std::string jsonObject(const std::string& json, const std::string& name) {
 	return {};
 }
 
-bool parseAirportLine(const std::string& line, FlightGenerator::Airport& airport) {
+	/// <summary>Parses and range-checks one airport database row.</summary>
+	/// <param name="line">Input database row.</param>
+	/// <param name="airport">Receives the parsed airport.</param>
+	/// <returns>true when the row contains a valid coordinate pair.</returns>
+	bool parseAirportLine(const std::string& line, FlightGenerator::Airport& airport) {
 	std::string normalized = line;
 	for (char& character : normalized) {
 		if (character == ',' || character == '\t') character = ' ';
@@ -56,12 +74,20 @@ bool parseAirportLine(const std::string& line, FlightGenerator::Airport& airport
 		&& (airport.latitude_deg != -90.0 || airport.longitude_deg != 0.0);
 }
 
-Vector3d unit(const Vector3d& value) {
+	/// <summary>Returns a normalized vector, or zero when the input has no length.</summary>
+	/// <param name="value">Vector to normalize.</param>
+	/// <returns>Normalized vector or a zero vector.</returns>
+	Vector3d unit(const Vector3d& value) {
 	const double length = std::sqrt(value.x * value.x + value.y * value.y + value.z * value.z);
 	return length > 0.0 ? value / length : Vector3d{};
 }
 
-Vector3d slerp(const Vector3d& a, const Vector3d& b, double fraction) {
+	/// <summary>Interpolates two unit vectors along the shortest spherical arc.</summary>
+	/// <param name="a">First unit vector.</param>
+	/// <param name="b">Second unit vector.</param>
+	/// <param name="fraction">Interpolation fraction.</param>
+	/// <returns>Interpolated unit vector.</returns>
+	Vector3d slerp(const Vector3d& a, const Vector3d& b, double fraction) {
 	const double dot = std::clamp(a.x * b.x + a.y * b.y + a.z * b.z, -1.0, 1.0);
 	const double angle = std::acos(dot);
 	if (angle < 1.0e-8) return unit(a + (b - a) * fraction);
@@ -71,6 +97,12 @@ Vector3d slerp(const Vector3d& a, const Vector3d& b, double fraction) {
 }
 }
 
+/// <summary>
+/// Generates sampled aircraft routes using the configured airport database.
+/// </summary>
+/// <param name="config">D-01 scenario configuration.</param>
+/// <param name="error">Receives an error message when generation fails.</param>
+/// <returns>Generated aircraft paths.</returns>
 std::vector<std::vector<Aircraft::PathPoint>> FlightGenerator::generate(
 	const ScenarioConfig& config, std::string& error) {
 	const std::string aircraft = jsonObject(config.json, "aircraft");
@@ -116,6 +148,7 @@ std::vector<std::vector<Aircraft::PathPoint>> FlightGenerator::generate(
 		return {};
 	}
 
+	// A supplied seed makes generated routes repeatable; zero requests nondeterministic seeding.
 	std::mt19937 generator(seed == 0 ? std::random_device{}() : seed);
 	std::uniform_int_distribution<std::size_t> airportDistribution(0, airports.size() - 1);
 	std::uniform_real_distribution<double> speedDistribution(speedMin, speedMax);

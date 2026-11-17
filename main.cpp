@@ -13,6 +13,14 @@
 #include "physics_engine_main.h"
 
 namespace {
+/// <summary>Parses the physics-engine run command and its numeric controls.</summary>
+/// <param name="argc">Argument count.</param>
+/// <param name="argv">Argument values.</param>
+/// <param name="startTime">Receives the run start time.</param>
+/// <param name="endTime">Receives the run end time.</param>
+/// <param name="stepSize">Receives the simulation step size.</param>
+/// <param name="storageRate">Receives the storage interval.</param>
+/// <returns>true when all arguments are valid.</returns>
 bool parseArguments(int argc, char* argv[], double& startTime, double& endTime,
     double& stepSize, int& storageRate)
 {
@@ -33,6 +41,9 @@ bool parseArguments(int argc, char* argv[], double& startTime, double& endTime,
     return stepSize > 0.0 && endTime > startTime && storageRate >= 1;
 }
 
+/// <summary>Locates and launches the Python subsystem when no engine arguments are supplied.</summary>
+/// <param name="executablePath">Path of the current executable.</param>
+/// <returns>The Python subsystem process result.</returns>
 int launchPythonSubsystems(const char* executablePath)
 {
     namespace fs = std::filesystem;
@@ -40,6 +51,7 @@ int launchPythonSubsystems(const char* executablePath)
     fs::path directory = executable.parent_path();
     fs::path controller;
 
+    // Search upward so the executable can be run from either a build or source directory.
     for (int i = 0; i < 5 && !directory.empty(); ++i) {
         const fs::path candidate = directory / "PythonLauncher.py";
         if (fs::exists(candidate)) {
@@ -60,6 +72,10 @@ int launchPythonSubsystems(const char* executablePath)
 }
 }
 
+/// <summary>Runs either the Python launcher or one physics-engine ephemeris run.</summary>
+/// <param name="argc">Argument count.</param>
+/// <param name="argv">Argument values.</param>
+/// <returns>Process result code.</returns>
 int main(int argc, char* argv[])
 {
     if (argc == 1) {
@@ -84,6 +100,7 @@ int main(int argc, char* argv[])
 
     int result = -1;
     if (InstantiateSubsystem() == 0) {
+        // Components consume the same unchanged scenario JSON and publish one result code.
         ConfigIntake::Instance->ingest(config);
         ConstellationGenerator::Instance->generate(config);
 

@@ -6,6 +6,12 @@
 #include "UnitConverter.h"
 
 namespace {
+/// <summary>
+/// Extracts an array section from the D-01 text for the current intake layer.
+/// </summary>
+/// <param name="json">Original D-01 JSON text.</param>
+/// <param name="name">Array property name.</param>
+/// <returns>The array fragment, or an empty string when absent.</returns>
 std::string section(const std::string& json, const std::string& name) {
     const std::size_t start = json.find("\"" + name + "\"");
     if (start == std::string::npos) return {};
@@ -13,6 +19,13 @@ std::string section(const std::string& json, const std::string& name) {
     const std::size_t close = json.find(']', open);
     return open == std::string::npos || close == std::string::npos ? std::string{} : json.substr(open + 1, close - open - 1);
 }
+/// <summary>
+/// Reads a numeric property from an object fragment.
+/// </summary>
+/// <param name="object">JSON object fragment.</param>
+/// <param name="name">Property name.</param>
+/// <param name="fallback">Value returned when the property is absent.</param>
+/// <returns>The parsed value or fallback.</returns>
 double number(const std::string& object, const std::string& name, double fallback = 0.0) {
     std::smatch match;
     const std::regex pattern("\\\"" + name + "\\\"\\s*:\\s*(-?[0-9]+(?:\\.[0-9]+)?)");
@@ -20,6 +33,11 @@ double number(const std::string& object, const std::string& name, double fallbac
 }
 }
 
+/// <summary>
+/// Reads D-01 and creates the configured ground stations and aircraft paths.
+/// </summary>
+/// <param name="config">D-01 scenario configuration.</param>
+/// <returns>true when intake succeeds; otherwise false.</returns>
 bool ConfigIntake::ingest(const ScenarioConfig& config) {
     groundStations_.clear();
     aircraftPathFiles_.clear();
@@ -28,6 +46,7 @@ bool ConfigIntake::ingest(const ScenarioConfig& config) {
         return false;
     }
     const std::string stations = section(config.json, "groundStations");
+    // This lightweight parser intentionally consumes the original JSON text without rewriting it.
     const std::regex object("\\{([^}]*)\\}");
     std::smatch match;
     std::string::const_iterator begin = stations.begin();

@@ -179,9 +179,13 @@
     <ClInclude Include="..\Vector3d.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\CommandInterface.py" />
+    <None Include="..\ConfigValidator.py" />
     <None Include="..\PythonLauncher.py" />
     <None Include="..\BackendControls.py" />
     <None Include="..\RunController.py" />
+    <None Include="..\RunRegistry.py" />
+    <None Include="..\StatusPublisher.py" />
   </ItemGroup>
   <PropertyGroup>
     <LocalDebuggerCommand>python.exe</LocalDebuggerCommand>
@@ -192,5 +196,3 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
-
-
