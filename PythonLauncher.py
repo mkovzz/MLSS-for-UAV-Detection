@@ -8,6 +8,7 @@ import sys
 
 
 def main() -> int:
+	"""Launch the Backend Controls subsystem in the repository root."""
 	root = Path(__file__).resolve().parent
 	backend_controls = root / "BackendControls.py"
 	print("[PythonLauncher] starting BackendControls.py", flush=True)

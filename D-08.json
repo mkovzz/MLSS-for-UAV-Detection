@@ -1,0 +1,50 @@
+{
+  "asset": "D-08",
+  "updatedAt": "2026-11-17T01:54:08.286643+00:00",
+  "runId": "run-20261117T015407Z-aa63f0b1",
+  "runState": "complete",
+  "progress": 1.0,
+  "etaSeconds": null,
+  "errorText": null,
+  "runList": [
+    {
+      "runId": "run-20261117T011034Z-b57d0c52",
+      "path": "C:\\Users\\benwh\\OneDrive\\Desktop\\Github_Repos\\MLSS-for-UAV-Detection\\runs\\run-20261117T011034Z-b57d0c52",
+      "createdAt": "2026-11-17T01:10:34.385183+00:00",
+      "state": "complete",
+      "controls": {
+        "start_time_s": 0.0,
+        "end_time_s": 900.0,
+        "step_size_s": 1.0,
+        "storage_rate": 10
+      },
+      "returnCode": 0
+    },
+    {
+      "runId": "run-20261117T011145Z-fabd5f2c",
+      "path": "C:\\Users\\benwh\\OneDrive\\Desktop\\Github_Repos\\MLSS-for-UAV-Detection\\runs\\run-20261117T011145Z-fabd5f2c",
+      "createdAt": "2026-11-17T01:11:45.727492+00:00",
+      "state": "complete",
+      "controls": {
+        "start_time_s": 0.0,
+        "end_time_s": 100.0,
+        "step_size_s": 1.0,
+        "storage_rate": 1
+      },
+      "returnCode": 0
+    },
+    {
+      "runId": "run-20261117T015407Z-aa63f0b1",
+      "path": "C:\\Users\\benwh\\OneDrive\\Desktop\\Github_Repos\\MLSS-for-UAV-Detection\\runs\\run-20261117T015407Z-aa63f0b1",
+      "createdAt": "2026-11-17T01:54:07.325135+00:00",
+      "state": "complete",
+      "controls": {
+        "start_time_s": 0.0,
+        "end_time_s": 1800.0,
+        "step_size_s": 1.0,
+        "storage_rate": 10
+      },
+      "returnCode": 0
+    }
+  ]
+}
