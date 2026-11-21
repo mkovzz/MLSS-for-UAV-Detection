@@ -33,7 +33,24 @@ class GroundTruthLogger:
     timeSource : float
     timeDest : float
     event : np.array[int, int, str, int, float, float, float, float, float]
-    def __int__(self, )
+    def __int__(self, sourceID : int,
+                destID : int,
+                type : str,
+                posInQ : int,
+                delay : float,
+                distance : float,
+                rate : float,
+                timeSource : float,
+                timeDest : float):
+        self.sourceID = sourceID
+        self.destID = destID
+        self.type = type
+        self.posInQ = posInQ
+        self.delay = delay
+        self.distance = distance
+        self.rate = rate
+        self.timeSource = timeSource
+        self.timeDest = timeDest
 
 class EnvironmentOutputHandler:
 
