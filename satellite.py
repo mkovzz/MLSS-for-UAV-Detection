@@ -21,8 +21,26 @@ class Message:
     time: float
     payload: np.ndarray
 
-    def fromArray(msgArray):
-        return 
+    def fromArray(arr):
+        arr = np.asarray(arr, float)
+        n = int(arr[5])
+        return Message(int(arr[0]), int(arr[1]), int(arr[2]), int(arr[3]), float(arr[4]), arr[6:6 + n])
+         
+#dataclasses
+class MsgType(enum.IntEnum):
+    TRACK_REPORT = 1   # payload: [track_id, x, y, z, vx, vy, vz, confirmed]
+    HANDOFF_REQ = 2    # payload: [track_id, x, y, z, vx, vy, vz, confirmed]
+    COVERAGE_REQ = 3   # payload: [x, y, z, duration_s]
+    ACK = 4            # payload: [acked_seq] 
+
+class Event:
+    """D-06 entry. `event_id` is what the ground-truth logger acks."""
+    ID: int
+    t: float
+    SatelliteID: int
+    event_type: int
+    data: tuple = ()
+
 
 class OffloadHandler:
 
