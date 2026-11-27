@@ -90,7 +90,7 @@ class Mem:
 
 
 
-
+#unnecessary
 class Layer(enum.IntEnum):
     LEO = 0
     MEO = 1
@@ -155,7 +155,7 @@ class SatelliteObject:
         #function that preps a message to send to a specific satellite
         #this has to pass through the environment model to verify link existence and if it is possible
         #it is an array of numbers detailing 
-        msg = self.router.enqueue(0, target, self.time, header.get("payload", []))
+        msg = self.router.enqueue(header["type"], target, self.time, header.get("payload", []))
         self.mem.logEvent(self.time, msg.destination, msg.type, msg.seq)
         return
 
@@ -164,7 +164,7 @@ class SatelliteObject:
         #functions as an interrupt
 
         msg = Message.fromArray(msgArray)
-        self.router.append(msg)
+        self.router.inbox.append(msg)
         return
 
     def rcvSensor(self, observation):

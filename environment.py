@@ -16,6 +16,7 @@
 from dataclasses import dataclass
 import math
 import heapq
+import itertools                                   # FIXED: needed for the heap tiebreaker counter
 from satellite import SatelliteObject, Message, Event, MsgType, Layer
 #from "Ephemeris.h" import Ephemeris
 from typing import Optional
@@ -106,12 +107,12 @@ class MessageEvent:
     sourceID : int
     destID : int
     type : str
-    posInQ : int = None
-    delay : float = None
-    distance : float = None
-    rate : float = None
-    timeSource : float = None
-    timeDest : float = None
+    posInQ : int = 0                       # FIXED: None can't be printed/formatted; use 0 / nan defaults
+    delay : float = math.nan
+    distance : float = math.nan
+    rate : float = math.nan
+    timeSource : float = math.nan
+    timeDest : float = math.nan
     status: str = "pending"
 
     def event(self) -> np.ndarray:
@@ -148,8 +149,8 @@ class Ephemeris:
         times = np.asarray(times, float)
         states = np.zeros((len(times), len(elements), 6))
         for m, (alt, inc, raan, phase) in enumerate(elements):
-            a = 6000 + alt
-            n = math.sqrt(4e14 / a**3)
+            a = 6.378e6 + alt                      # FIXED: was 6000 + alt (km/m mix-up: orbit radius was ~556 km)
+            n = math.sqrt(3.986e14 / a**3)         # FIXED: Earth's mu in m^3/s^2
             P = np.array([math.cos(raan), math.sin(raan), 0.0])
             Q = np.array([-math.sin(raan) * math.cos(inc), math.cos(raan) * math.cos(inc), math.sin(inc)])
             th = phase + n * times
@@ -188,7 +189,7 @@ class EnvironmentOutputHandler:
 
     def setUpLinks(self, t: float, states: list):
         for s in states:
-            self.link_rows.append([t, s.sat_a, s.sat_b, s.exists, s.distance_m, s.delay_s, s.margin_db, s.rate_bps])
+            self.linkRows.append([t, s.sat_a, s.sat_b, s.exists, s.distance_m, s.delay_s, s.margin_db, s.rate_bps])   # FIXED: was self.link_rows
 
     def summary(self) -> dict:
         ev = self.logger.MessageEvents
@@ -210,11 +211,13 @@ class Environment:
         self.defaultRate = defaultRate
         self.buildSatellites()
         self.logger = GroundTruthLogger()
+        self.output = EnvironmentOutputHandler(self.logger)   # FIXED: was never created (env.output.summary() failed)
         self.stagedMessages: dict[int, list] = {i: [] for i in range(constArray.total())}  #messages pulled out of a satellite's outbox but not yet handed to messagePassing
         self.time = float(ephemeris.times[0])
         self.positions = self.SatelliteHandler(self.eph, self.time)
         self.satelliteTransmitTimes: dict[int, list] = {i: [] for i in range(constArray.total())} #maps each satellite ID to a list of times, the times being when one of that satellite's queued messages finishes being transmitted
         self.inFlight: list = [] 
+        self.tick = itertools.count()                          # FIXED: heap tiebreaker (replaces the undefined self._tick)
     def SatelliteHandler(self, eph, t):
         #establishes the positions of all bodies, to be used later when calculating link distances and viability
         #stores in a 2D array of the format [x, y, z, velocity]
@@ -222,16 +225,18 @@ class Environment:
                                            #   ...
         return eph.state_at(t)
     def linkState(self, s1, s2):
-        #no need for implementation right now, need message passing completed
-        return
+        #STUB (this was the cause of the 'NoneType has no rate_bps' error): always exists, fixed rate,
+        #delay from straight-line distance. s1, s2 are integer satellite IDs.
+        d = float(np.linalg.norm(self.positions[s2, :3] - self.positions[s1, :3]))
+        return LinkState(s1, s2, True, d, d / 299_792_458.0, math.inf, self.defaultRate)
     
     def linkViability(self, s1 : SatelliteObject, s2 : SatelliteObject):
         #determines whether two satellites can viably have a link
         #depends on distance, objects in the way, whether they are both online, etc
         #takes in from the ephemeris, which is handled by the SatelliteHandler function
         #returns a true or false
-        #return self.linkState(s1, s2).exists
-        return True
+        return self.linkState(s1, s2).exists
+        #return True
 
     def MessagePassing(self, s1 : SatelliteObject, target = None):
         #message passing function that takes the message from one satellite's inbox and directs it to its target
@@ -239,10 +244,11 @@ class Environment:
         #once the message is passed, the receipt of the transaction is stored as an event in the GroundTruthLogger,
         #along with the link details (what satellites were involved, what distance, delay, data rate, etc)
         ID = s1.ID
+        tgt = getattr(target, "ID", target)                    # FIXED: self.ID() doesn't exist; accepts a satellite or an int
         keep = []
         for arr in self.stagedMessages[ID]:
             msg = Message.fromArray(arr)
-            if target is not None and msg.destination != self.ID(target):
+            if target is not None and msg.destination != tgt:
                 keep.append(arr)
                 continue
             self.messageTransmission(ID, msg, arr)
@@ -277,11 +283,8 @@ class Environment:
         """Hand every in-flight message whose arrival time is <= t to its destination satellite."""
         while self.inFlight and self.inFlight[0][0] <= t + 1e-12:
             _, _, dst, arr, ev = heapq.heappop(self.inFlight)
-            if not self.online[dst]:
-                ev.status, ev.timeDest = "dropped_offline", math.nan
-                self.logger.log_message_event(ev)
-                continue
-            self.sats[dst].rcv_msg_from_env(arr)        # destination's D-05 in
+            # FIXED: removed the self.online[dst] check (self.online was never defined; link viability isn't needed yet)
+            self.sats[dst].rcvMsgFromEnv(arr)        # FIXED: method is rcvMsgFromEnv, not rcv_msg_from_env
             ev.status = "delivered"
             self.logger.log_message_event(ev)  
 
@@ -327,7 +330,7 @@ class Environment:
 
         #case for if link is non-functioning
         st = self.linkState(src, msg.destination)
-        # ev.distance = st.distance_m
+        ev.distance = st.distance_m                              # FIXED: uncommented (distance was left empty in the log)
         # if not st.exists:
         #     ev.status = ("dropped_offline" if not (self.online[src] and self.online[msg.dst])
         #                  else "dropped_no_link")
@@ -346,7 +349,7 @@ class Environment:
         ev.rate, ev.delay, ev.timeDest = st.rate_bps, arrival - t, arrival
         out = arr.copy()
         out[4] = arrival                                # receiver sees its arrival time in the header
-        heapq.heappush(self._in_flight, (arrival, next(self._tick), msg.dst, out, ev))
+        heapq.heappush(self.inFlight, (arrival, next(self.tick), msg.destination, out, ev))   # FIXED: names (inFlight, tick, destination)
 
 
 if __name__ == "__main__" : 
@@ -359,10 +362,10 @@ if __name__ == "__main__" :
 
     # satellites 0 and 2 put messages in their outboxes (sat 0 sends three in a burst)
     track = [1, 7.0e6, 0.0, 0.0, 0.0, 7500.0, 0.0, 1.0]       # [id, x, y, z, vx, vy, vz, confirmed]
-    env.sats[0].sendMsgToEnv(dict(msg_type=MsgType.TRACK_REPORT, payload=track), target=3)
-    env.sats[0].sendMsgToEnv(dict(msg_type=MsgType.COVERAGE_REQ, payload=[7.0e6, 0, 0, 30.0]), target=3)
-    env.sats[0].sendMsgToEnv(dict(msg_type=MsgType.TRACK_REPORT, payload=track), target=1)
-    env.sats[2].sendMsgToEnv(dict(msg_type=MsgType.COVERAGE_REQ, payload=[7.0e6, 0, 0, 10.0]), target=4)
+    env.sats[0].sendMsgToEnv(dict(type=MsgType.TRACK_REPORT, payload=track), target=1)
+    env.sats[1].sendMsgToEnv(dict(type=MsgType.COVERAGE_REQ, payload=[7.0e6, 0, 0, 30.0]), target=2)
+    env.sats[2].sendMsgToEnv(dict(type=MsgType.TRACK_REPORT, payload=track), target=3)
+    env.sats[3].sendMsgToEnv(dict(type=MsgType.COVERAGE_REQ, payload=[7.0e6, 0, 0, 10.0]), target=4)
 
     print("Outbox sizes before the run:", {i: len(s.router.outbox) for i, s in env.sats.items()})
 
@@ -379,11 +382,12 @@ if __name__ == "__main__" :
         print(f"{e.sourceID:>3} {e.destID:>3} {e.type:<13} {e.posInQ:>6} {e.timeSource:>8.2f} "
               f"{e.timeDest:>9.4f} {e.distance/1e3:>9.1f} {e.rate:>9.0f} {e.delay:>8.4f}  {e.status}")
 
-    print("\nWhat the receiving satellites ended up with:")
+    # FIXED: the old version used s.mem / s.fusion / EventType, which don't exist in satellite.py yet.
+    # rcvMsgFromEnv only appends to the inbox, so the proof of delivery is the inbox contents.
+    print("\nInbox contents of the receiving satellites:")
     for sid in (1, 3, 4):
         s = env.sats[sid]
-        got = [ev for ev in s.mem.event_log if ev.event_type == EventType.MSG_RECEIVED]
-        print(f"  sat {sid}: MSG_RECEIVED events={len(got)}, tracks held={len(s.fusion.tracks)}, "
-              f"coverage requests={len(s.mem.read('coverage_requests'))}, inbox left={len(s.router.inbox)}")
+        print(f"  sat {sid}: {len(s.router.inbox)} message(s) -> "
+              f"{[(MsgType(m.type).name, f'seq {m.seq}', f'arrived {m.time:.4f}s') for m in s.router.inbox]}")
     print("\nOutbox sizes after the run:", {i: len(s.router.outbox) for i, s in env.sats.items()})
     print("Summary:", env.output.summary())
